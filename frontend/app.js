@@ -1,6 +1,6 @@
+
 const API_URL = "http://localhost:3000";
 
-// Elementos del DOM
 const listaProductos = document.getElementById("listaProductos");
 const formulario = document.getElementById("formularioProducto");
 const productoId = document.getElementById("productoId");
@@ -11,8 +11,8 @@ const btnGuardar = document.getElementById("btnGuardar");
 const btnCancelar = document.getElementById("btnCancelar");
 const tituloFormulario = document.getElementById("tituloFormulario");
 const formContacto = document.getElementById("formularioContacto");
+const listaHistorial = document.getElementById("listaHistorial");
 
-// 1. Función para consultar los productos y mostrarlos en el DOM (READ)
 async function cargarProductos() {
   if (!listaProductos) return;
 
@@ -50,7 +50,6 @@ async function cargarProductos() {
   }
 }
 
-// 2. Cargar datos del producto en el formulario para editar (UPDATE - Paso 1)
 function cargarEnFormulario(id, nombre, precio, stock) {
   productoId.value = id;
   nombreInput.value = nombre;
@@ -63,7 +62,6 @@ function cargarEnFormulario(id, nombre, precio, stock) {
   nombreInput.focus();
 }
 
-// Cancelar edición y restaurar formulario
 function cancelarEdicion() {
   formulario.reset();
   productoId.value = "";
@@ -76,10 +74,9 @@ if (btnCancelar) {
   btnCancelar.addEventListener("click", cancelarEdicion);
 }
 
-// 3. Guardar o Actualizar según si hay un ID seleccionado (CREATE o UPDATE)
 if (formulario) {
   formulario.addEventListener("submit", async (event) => {
-    event.preventDefault(); // Evitar que la página se recargue
+    event.preventDefault();
 
     const id = productoId.value;
     const nombre = nombreInput.value;
@@ -88,14 +85,12 @@ if (formulario) {
 
     try {
       if (id) {
-        // MODO ACTUALIZAR (PUT)
         await fetch(`${API_URL}/productos/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ nombre, precio, stock }),
         });
       } else {
-        // MODO CREAR (POST)
         await fetch(`${API_URL}/productos`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -103,15 +98,14 @@ if (formulario) {
         });
       }
 
-      cancelarEdicion(); // Limpiar formulario y restaurar botones
-      cargarProductos(); // Refrescar la lista en pantalla
+      cancelarEdicion();
+      cargarProductos();
     } catch (error) {
       console.error("Error al guardar el producto:", error);
     }
   });
 }
 
-// 4. Eliminar un producto (DELETE)
 async function eliminarProducto(id) {
   const confirmar = confirm("¿Deseas eliminar este producto de la base de datos?");
   if (!confirmar) return;
@@ -121,25 +115,100 @@ async function eliminarProducto(id) {
       method: "DELETE",
     });
 
-    // Si estábamos editando ese mismo producto, cancelamos la edición
     if (productoId.value == id) {
       cancelarEdicion();
     }
 
-    cargarProductos(); // Refrescar la lista en pantalla
+    cargarProductos();
   } catch (error) {
     console.error("Error al eliminar producto:", error);
   }
 }
 
-// 5. Formulario de contacto (demostrativo en contacto.html)
+async function cargarHistorial() {
+  if (!listaHistorial) return;
+
+  try {
+    const respuesta = await fetch(`${API_URL}/contactos`);
+    const mensajes = await respuesta.json();
+
+    listaHistorial.innerHTML = "";
+
+    if (mensajes.length === 0) {
+      listaHistorial.innerHTML = "<p style='color: #64748b;'>No hay mensajes enviados.</p>";
+      return;
+    }
+
+    mensajes.forEach((m) => {
+      const elemento = document.createElement("div");
+      elemento.classList.add("producto");
+      elemento.style.flexDirection = "row";
+      elemento.style.alignItems = "center";
+      elemento.style.justifyContent = "space-between";
+      elemento.style.gap = "20px";
+
+      elemento.innerHTML = `
+        <div>
+          <h3>${m.asunto}</h3>
+          <p>${m.nombre_completo} — ${m.correo}</p>
+          <p>${m.mensaje}</p>
+          <p>${new Date(m.fecha_envio).toLocaleString()}</p>
+        </div>
+        <div class="acciones" style="flex-shrink: 0;">
+          <button class="btn-eliminar" style="padding: 8px 16px;" onclick="eliminarContacto(${m.id})">Eliminar</button>
+        </div>
+      `;
+
+      listaHistorial.appendChild(elemento);
+    });
+  } catch (error) {
+    console.error("Error al cargar el historial:", error);
+  }
+}
+
+async function eliminarContacto(id) {
+  const confirmar = confirm("¿Deseas eliminar este mensaje del historial?");
+  if (!confirmar) return;
+
+  try {
+    await fetch(`${API_URL}/contactos/${id}`, {
+      method: "DELETE",
+    });
+
+    cargarHistorial();
+  } catch (error) {
+    console.error("Error al eliminar el mensaje:", error);
+  }
+}
+
 if (formContacto) {
-  formContacto.addEventListener("submit", (e) => {
+  formContacto.addEventListener("submit", async (e) => {
     e.preventDefault();
-    alert("¡Mensaje de contacto enviado con éxito!");
-    formContacto.reset();
+
+    const nombre_completo = document.getElementById("nombreCompleto").value;
+    const correo = document.getElementById("correo").value;
+    const asunto = document.getElementById("asunto").value;
+    const mensaje = document.getElementById("mensaje").value;
+
+    try {
+      const respuesta = await fetch(`${API_URL}/contactos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre_completo, correo, asunto, mensaje }),
+      });
+
+      if (respuesta.ok) {
+        alert("¡Mensaje de contacto enviado con éxito!");
+        formContacto.reset();
+        cargarHistorial();
+      } else {
+        alert("Error al enviar el mensaje");
+      }
+    } catch (error) {
+      console.error("Error al enviar el mensaje:", error);
+    }
   });
 }
 
-// Llamado inicial al cargar la página
 cargarProductos();
+cargarHistorial();
