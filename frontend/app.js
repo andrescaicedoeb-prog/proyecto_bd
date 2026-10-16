@@ -1,5 +1,5 @@
 
-const API_URL = "http://localhost:3000";
+const API_URL = "https://proyecto-bd-fw27.onrender.com";
 
 const listaProductos = document.getElementById("listaProductos");
 const formulario = document.getElementById("formularioProducto");
