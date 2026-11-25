@@ -1,4 +1,3 @@
-
 const API_URL = "https://proyecto-bd-fw27.onrender.com";
 
 const listaProductos = document.getElementById("listaProductos");
@@ -38,7 +37,7 @@ async function cargarProductos() {
           <p>Stock: ${producto.stock} unidades</p>
         </div>
         <div class="acciones">
-          <button class="btn-editar" onclick="cargarEnFormulario(${producto.id}, '${producto.nombre}', ${producto.precio}, ${producto.stock})">Editar</button>
+          <button class="btn-editar" onclick="editarProducto(${producto.id}, '${producto.nombre}', ${producto.precio}, ${producto.stock})">Editar</button>
           <button class="btn-eliminar" onclick="eliminarProducto(${producto.id})">Eliminar</button>
         </div>
       `;
@@ -48,6 +47,12 @@ async function cargarProductos() {
   } catch (error) {
     console.error("Error al cargar productos:", error);
   }
+}
+
+// Desde la página de Productos: abre el formulario con los datos del producto
+function editarProducto(id, nombre, precio, stock) {
+  window.location.href =
+    `formulario.html?id=${id}&nombre=${encodeURIComponent(nombre)}&precio=${precio}&stock=${stock}`;
 }
 
 function cargarEnFormulario(id, nombre, precio, stock) {
@@ -72,6 +77,19 @@ function cancelarEdicion() {
 
 if (btnCancelar) {
   btnCancelar.addEventListener("click", cancelarEdicion);
+}
+
+// Si llegamos al formulario desde "Editar", cargamos los datos
+if (formulario) {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("id")) {
+    cargarEnFormulario(
+      params.get("id"),
+      params.get("nombre"),
+      params.get("precio"),
+      params.get("stock")
+    );
+  }
 }
 
 if (formulario) {
@@ -99,7 +117,8 @@ if (formulario) {
       }
 
       cancelarEdicion();
-      cargarProductos();
+      // Al guardar, vamos a la lista de productos
+      window.location.href = "productos.html";
     } catch (error) {
       console.error("Error al guardar el producto:", error);
     }
@@ -115,7 +134,7 @@ async function eliminarProducto(id) {
       method: "DELETE",
     });
 
-    if (productoId.value == id) {
+    if (productoId && productoId.value == id) {
       cancelarEdicion();
     }
 

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Productos — Mi Tienda</title>
+
+  <!-- Fuente moderna -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <!-- ===== BARRA DE NAVEGACIÓN (NAVBAR) ===== -->
+  <header class="navbar">
+    <div class="contenedor nav-contenido">
+      <a href="index.html" class="logo"> Mi<strong>Tienda</strong></a>
+      <nav class="nav-links">
+        <a href="index.html">Inicio</a>
+        <a href="productos.html">Productos</a>
+        <a href="formulario.html">Formulario</a>
+        <a href="contacto.html">Contacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== CONTENIDO PRINCIPAL ===== -->
+  <main class="contenedor">
+    <section class="tarjeta" id="productos">
+      <h2>Lista de Productos</h2>
+      <div id="listaProductos" class="lista-productos">
+        <!-- Los productos se cargan desde app.js -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== PIE DE PÁGINA (FOOTER) ===== -->
+  <footer class="footer">
+    <div class="contenedor footer-contenido">
+      <p>copy; 2026 Mi Tienda — Proyecto Formativo con Node.js, Express y MySQL.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
