@@ -1,4 +1,9 @@
-const API_URL = "https://proyecto-bd-fw27.onrender.com";
+const API_URL = 
+ window.location.hostname === "localhost" || 
+window.location.hostname === "127.0.0.1" || 
+window.location.protocol === "file:"
+   ? "http://localhost:3000"
+   : "https://proyecto-bd-fw27.onrender.com";
 
 const listaProductos = document.getElementById("listaProductos");
 const formulario = document.getElementById("formularioProducto");
@@ -6,11 +11,70 @@ const productoId = document.getElementById("productoId");
 const nombreInput = document.getElementById("nombre");
 const precioInput = document.getElementById("precio");
 const stockInput = document.getElementById("stock");
+const imagenInput = document.getElementById("imagen");
 const btnGuardar = document.getElementById("btnGuardar");
 const btnCancelar = document.getElementById("btnCancelar");
 const tituloFormulario = document.getElementById("tituloFormulario");
 const formContacto = document.getElementById("formularioContacto");
 const listaHistorial = document.getElementById("listaHistorial");
+const vistaPreviaImagen = document.getElementById("vistaPreviaImagen");
+let imagenBase64 = null;
+
+function convertirImagenBase64(archivo) {
+    return new Promise((resolve, reject) => {
+        const lector = new FileReader();
+
+        lector.onload = () => resolve(lector.result);
+        lector.onerror = () => reject(new Error("No se pudo leer la imagen"));
+
+        lector.readAsDataURL(archivo);
+    });
+}
+
+if (imagenInput) {
+    imagenInput.addEventListener("change", async () => {
+        const archivo = imagenInput.files[0];
+
+        if (!archivo) {
+            imagenBase64 = null;
+            vistaPreviaImagen.hidden = true;
+            vistaPreviaImagen.src = "";
+            return;
+        }
+
+        const formatosPermitidos = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (!formatosPermitidos.includes(archivo.type)) {
+            alert("Selecciona una imagen JPG, PNG o WEBP.");
+            imagenInput.value = "";
+            return;
+        }
+
+        if (archivo.size > 7 * 1024 * 1024) {
+            alert("La imagen no puede superar los 7 MB.");
+            imagenInput.value = "";
+            return;
+        }
+
+        try {
+            imagenBase64 = await convertirImagenBase64(archivo);
+
+            vistaPreviaImagen.src = imagenBase64;
+            vistaPreviaImagen.hidden = false;
+
+        } catch (error) {
+            console.error("Error al leer la imagen:", error);
+            alert("No se pudo cargar la imagen.");
+            imagenInput.value = "";
+            imagenBase64 = null;
+        }
+    });
+}
+
 
 async function cargarProductos() {
   if (!listaProductos) return;
@@ -55,24 +119,38 @@ function editarProducto(id, nombre, precio, stock) {
     `formulario.html?id=${id}&nombre=${encodeURIComponent(nombre)}&precio=${precio}&stock=${stock}`;
 }
 
-function cargarEnFormulario(id, nombre, precio, stock) {
-  productoId.value = id;
-  nombreInput.value = nombre;
-  precioInput.value = precio;
-  stockInput.value = stock;
+function cargarEnFormulario(id, nombre, precio, stock, imagen_url = null) {
+    productoId.value = id;
+    nombreInput.value = nombre;
+    precioInput.value = precio;
+    stockInput.value = stock;
 
-  tituloFormulario.textContent = "Editar Producto";
-  btnGuardar.textContent = "Actualizar Producto";
-  btnCancelar.style.display = "block";
-  nombreInput.focus();
+    imagenBase64 = null;
+
+    if (imagen_url) {
+        vistaPreviaImagen.src = imagen_url;
+        vistaPreviaImagen.hidden = false;
+    }
+
+    tituloFormulario.textContent = "Editar Producto";
+    btnGuardar.textContent = "Actualizar Producto";
+    btnCancelar.style.display = "block";
+
+    nombreInput.focus();
 }
 
 function cancelarEdicion() {
-  formulario.reset();
-  productoId.value = "";
-  tituloFormulario.textContent = "Registrar Producto";
-  btnGuardar.textContent = "Guardar Producto";
-  btnCancelar.style.display = "none";
+    formulario.reset();
+
+    productoId.value = "";
+    imagenBase64 = null;
+
+    vistaPreviaImagen.src = "";
+    vistaPreviaImagen.hidden = true;
+
+    tituloFormulario.textContent = "Registrar Producto";
+    btnGuardar.textContent = "Guardar Producto";
+    btnCancelar.style.display = "none";
 }
 
 if (btnCancelar) {
@@ -87,42 +165,61 @@ if (formulario) {
       params.get("id"),
       params.get("nombre"),
       params.get("precio"),
-      params.get("stock")
+      params.get("stock"),
+      params.get("imagen_url")
     );
   }
 }
 
 if (formulario) {
-  formulario.addEventListener("submit", async (event) => {
-    event.preventDefault();
+    formulario.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-    const id = productoId.value;
-    const nombre = nombreInput.value;
-    const precio = precioInput.value;
-    const stock = stockInput.value;
+        const id = productoId.value;
 
-    try {
-      if (id) {
-        await fetch(`${API_URL}/productos/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nombre, precio, stock }),
-        });
-      } else {
-        await fetch(`${API_URL}/productos`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nombre, precio, stock }),
-        });
-      }
+        const datosProducto = {
+            nombre: nombreInput.value,
+            precio: precioInput.value,
+            stock: stockInput.value
+        };
 
-      cancelarEdicion();
-      // Al guardar, vamos a la lista de productos
-      window.location.href = "productos.html";
-    } catch (error) {
-      console.error("Error al guardar el producto:", error);
-    }
-  });
+        if (imagenBase64) {
+            datosProducto.imagenBase64 = imagenBase64;
+        }
+
+        try {
+            const respuesta = await fetch(
+                id
+                    ? `${API_URL}/productos/${id}`
+                    : `${API_URL}/productos`,
+                {
+                    method: id ? "PUT" : "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(datosProducto)
+                }
+            );
+
+            const resultado = await respuesta.json();
+
+            if (!respuesta.ok) {
+                throw new Error(
+                    resultado.mensaje || "No se pudo guardar el producto."
+                );
+            }
+
+            alert(resultado.mensaje);
+
+            cancelarEdicion();
+
+            window.location.href = "productos.html";
+
+        } catch (error) {
+            console.error("Error al guardar el producto:", error);
+            alert(error.message || "Error al guardar el producto.");
+        }
+    });
 }
 
 async function eliminarProducto(id) {

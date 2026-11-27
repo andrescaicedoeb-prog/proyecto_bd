@@ -17,7 +17,7 @@
     --blur: blur(24px) saturate(160%);
     --sombra: 0 10px 40px rgba(0, 0, 0, 0.45);
     --radio: 18px;
-}
+} 
 
 * {
     margin: 0;
@@ -500,4 +500,24 @@ textarea:focus {
     .tarjeta {
         padding: 22px;
     }
+}
+
+.ayuda-imagen {
+    font-size: 0.78rem;
+    color: var(--gris);
+}
+
+.vista-previa-imagen {
+    display: block;
+    width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+}
+
+.vista-previa-imagen[hidden] {
+    display: none;
 }
